@@ -119,13 +119,11 @@ class CrosshairOverlay(QMainWindow):
     def toggle_settings_ui(self):
         if self.settings_window and self.settings_window.isVisible():
             self.settings_window.close()
-            if self.game_hwnd:
-                try:
-                    win32gui.SetForegroundWindow(self.game_hwnd)
-                except Exception:
-                    pass
+            # Вызываем метод бесшовного возврата фокуса в игру
+            self.restore_game_focus()
             return
 
+        # Запоминаем дескриптор окна Stalcraft перед открытием меню
         self.game_hwnd = win32gui.GetForegroundWindow()
 
         self.settings_window = QWidget()
@@ -182,6 +180,20 @@ class CrosshairOverlay(QMainWindow):
         self.settings_window.setLayout(layout)
         self.settings_window.show()
         self.settings_window.activateWindow()
+
+    def restore_game_focus(self):
+        """Возвращает фокус игре и заставляет движок Stalcraft скрыть курсор"""
+        if self.game_hwnd:
+            try:
+                # Гарантируем, что окно развернуто и активно
+                win32gui.ShowWindow(self.game_hwnd, win32con.SW_SHOW)
+                win32gui.SetForegroundWindow(self.game_hwnd)
+                
+                # Имитируем нажатие клавиши Alt. 
+                # Это заставляет Stalcraft обновить систему ввода и запереть мышь в центре экрана.
+                keyboard.send('alt') 
+            except Exception as e:
+                print(f"Не удалось вернуть фокус в игру: {e}")
 
     def on_config_changed(self):
         self.offset_x = self.spin_x.value()
